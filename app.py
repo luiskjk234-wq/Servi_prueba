@@ -166,7 +166,6 @@ def responder():
     registrar_log(numero, mensaje, respuesta)
     return jsonify(respuesta)
 
-
 def guardar_cita(nombre, hora, servicio):
     fecha = datetime.now().strftime("%Y-%m-%d")
     nueva_cita = {"nombre": nombre, "hora": hora, "fecha": fecha, "servicio": servicio}
@@ -307,9 +306,10 @@ def registrar_log(numero, mensaje, respuesta):
     with open(LOG, "a", encoding="utf-8") as f:
         f.write(f"{datetime.now()} | {numero} | {mensaje} | {respuesta}\n")
 
-
 if __name__ == '__main__':
     app.run(debug=True)
+
+
 
 
 

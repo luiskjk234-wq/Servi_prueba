@@ -1,29 +1,34 @@
 
 # AxelBot Premium 💈🤖
 
-Un bot de WhatsApp diseñado para barberías, negocios locales y servicios profesionales que quieren automatizar su agenda y atención al cliente de forma rápida, confiable y 24/7.
+Un bot de WhatsApp diseñado para **barberías, negocios locales y servicios profesionales** que quieren automatizar su agenda y atención al cliente de forma **rápida, confiable y 24/7**.
+
+---
 
 ## 🚀 ¿Qué hace AxelBot Premium?
-- 📲 Conecta tu número de WhatsApp y responde automáticamente a tus clientes.
-- 📅 Agenda citas en segundos con nombre, hora y servicio.
-- 💈 Muestra menús interactivos: servicios, promociones, horarios y ubicación.
-- 🧾 Genera estadísticas y reportes de citas.
-- 🔒 Mantiene la sesión activa (sin necesidad de escanear QR cada vez).
-- ☁️ Funciona en Railway/Fly.io con hosting estable 24/7.
+- 📲 Conecta tu número de WhatsApp y responde automáticamente a tus clientes.  
+- 📅 Agenda citas en segundos con nombre, hora y servicio.  
+- 💈 Muestra menús interactivos: servicios, promociones, horarios y ubicación.  
+- 🧾 Genera estadísticas y reportes de citas.  
+- 🔒 Mantiene la sesión activa (sin necesidad de escanear QR cada vez).  
+- ☁️ Funciona en Railway/Fly.io con hosting estable 24/7.  
 
 ## 📂 Archivos principales
-- index.js → Bot en Node.js (WhatsApp).
-- app.py → Backend Flask (agenda y lógica).
-- citas.json → Base de datos simple para pruebas.
-- Dockerfile → Configuración lista para Railway.
-- requirements.txt → Dependencias de Python.
+- `index.js` → Bot en Node.js (WhatsApp).  
+- `app.py` → Backend Flask (agenda y lógica).  
+- `citas.json` → Base de datos simple para pruebas.  
+- `Dockerfile` → Configuración lista para Railway.  
+- `requirements.txt` → Dependencias de Python.  
+
+---
 
 ## ⚙️ Variables de entorno necesarias
 Configura en Railway o tu servidor:
-- SESSION_NAME → Nombre de la sesión de WhatsApp.
-- PORT → Puerto de ejecución (ej. 3000).
-- BACKEND_URL → URL del backend Flask (ej. http://backend:5000/respuesta).
-- PUPPETEER_EXECUTABLE_PATH → Ruta de Chromium (/usr/bin/chromium en Docker).
+
+- `SESSION_NAME` → Nombre de la sesión de WhatsApp.  
+- `PORT` → Puerto de ejecución (ej. 3000).  
+- `BACKEND_URL` → URL del backend Flask (ej. `http://backend:5000/respuesta`).  
+- `PUPPETEER_EXECUTABLE_PATH` → Ruta de Chromium (ej. `/usr/bin/chromium` en Docker).  
 
 ## 🛠️ Instalación rápida
 1. Clona el repositorio:
@@ -74,6 +79,7 @@ Este sistema está diseñado para la **automatización responsable de citas y at
 - ✅ El cliente es responsable de mantener un uso adecuado y dentro de las políticas de WhatsApp.  
 
 👉 Con AxelBot Premium tendrás un asistente confiable y profesional, siempre que se utilice de manera responsable.
+
 
 
 

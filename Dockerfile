@@ -1,10 +1,8 @@
-
 FROM node:20
 
-
+# Instalar Chromium y librerías necesarias
 RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
+    chromium \
     ca-certificates \
     fonts-liberation \
     libnss3 \
@@ -21,20 +19,19 @@ RUN apt-get update && apt-get install -y \
     libxshmfence1 \
     && rm -rf /var/lib/apt/lists/*
 
-
 WORKDIR /app
 
-
 COPY package*.json ./
-
-
 RUN npm install
-
-
 COPY . .
 
-
+# Evitar que Puppeteer descargue su propio Chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
+# Carpeta para guardar sesión de WhatsApp (persistente en Railway)
+VOLUME ["/app/session"]
 
 CMD ["npm", "start"]
+
+

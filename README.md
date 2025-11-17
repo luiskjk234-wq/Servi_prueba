@@ -1,20 +1,80 @@
-# AxelBot Premium
+# AxelBot Premium 💈🤖
 
-Bot de WhatsApp con Puppeteer + whatsapp-web.js y backend Flask.
+Un bot de WhatsApp diseñado para **barberías, negocios locales y servicios profesionales** que quieren automatizar su agenda y atención al cliente de forma **rápida, confiable y 24/7**.
 
-## 🚀 Cómo funciona
-- Escanea un QR para vincular tu número.
-- El bot responde mensajes y se conecta al backend Flask.
-- El backend maneja la lógica de citas y respuestas.
+---
+
+## 🚀 ¿Qué hace AxelBot Premium?
+- 📲 Conecta tu número de WhatsApp y responde automáticamente a tus clientes.
+- 📅 Agenda citas en segundos con nombre, hora y servicio.
+- 💈 Muestra menús interactivos: servicios, promociones, horarios y ubicación.
+- 🧾 Genera estadísticas y reportes de citas.
+- 🔒 Mantiene la sesión activa (sin necesidad de escanear QR cada vez).
+- ☁️ Funciona en Railway/Fly.io con hosting estable 24/7.
+
+---
 
 ## 📂 Archivos principales
-- `index.js` → Bot en Node.js
-- `aplicación.py` → Backend Flask
-- `citas.json` → Base de datos simple
-- `Dockerfile` → Configuración para Railway
+- `index.js` → Bot en Node.js (WhatsApp).
+- `app.py` → Backend Flask (agenda y lógica).
+- `citas.json` → Base de datos simple para pruebas.
+- `Dockerfile` → Configuración lista para Railway.
+- `requirements.txt` → Dependencias de Python.
 
-## ⚙️ Variables de entorno
-Configura en Railway:
-- `SESSION_NAME`
-- `PORT`
-- `BACKEND_URL`
+---
+
+## ⚙️ Variables de entorno necesarias
+Configura en Railway o tu servidor:
+- `SESSION_NAME` → Nombre de la sesión de WhatsApp.
+- `PORT` → Puerto de ejecución (ej. 3000).
+- `BACKEND_URL` → URL del backend Flask (ej. `http://backend:5000/respuesta`).
+- `PUPPETEER_EXECUTABLE_PATH` → Ruta de Chromium (`/usr/bin/chromium` en Docker).
+
+---
+
+## 🛠️ Instalación rápida
+1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/tuusuario/axelbot-premium.git
+   cd axelbot-premium
+2. Instala dependencias:
+npm install
+pip install -r requirements.txt
+
+3.Configurar el env:
+SESSION_NAME=axelbot
+PORT=3000
+BACKEND_URL=http://localhost:5000/respuesta
+PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+4. Iniciar el backend en flask:
+python app.py
+
+5. Iniciar el bot en Whatsapp: 
+npm start
+
+💎 Beneficios para tu negocio
+Ahorra tiempo: tus clientes reservan sin llamadas ni mensajes manuales.
+
+Imagen profesional: un bot premium que responde rápido y con estilo.
+
+Escalable: funciona para barberías, clínicas, restaurantes y cualquier negocio.
+
+Soporte exclusivo: instalación y configuración inicial incluida.
+
+💰 Paquete Premium
+Por $120 USD recibes:
+
+Bot WhatsApp + Backend Flask listos para producción.
+
+Configuración en Railway/Fly.io con hosting estable.
+
+Documentación clara y soporte inicial.
+
+Personalización de nombre, servicios y promociones.
+
+📞 Contacto : +58 4126717861
+¿Quieres tu bot premium? 👉 Escríbenos y recibe tu demo exclusiva de 2–3 días antes de la instalación completa.
+
+
+

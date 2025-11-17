@@ -31,55 +31,47 @@ Configura en Railway o tu servidor:
 - `BACKEND_URL` → URL del backend Flask (ej. `http://backend:5000/respuesta`).  
 - `PUPPETEER_EXECUTABLE_PATH` → Ruta de Chromium (`/usr/bin/chromium` en Docker).  
 
----
-
 ## 🛠️ Instalación rápida
 1. Clona el repositorio:
    ```bash
    git clone https://github.com/tuusuario/axelbot-premium.git
    cd axelbot-premium
-2. Instala dependencias:
-npm install
-pip install -r requirements.txt
-Configura el archivo .env:
-
-3. Configura el archivo env:
-SESSION_NAME=axelbot
-PORT=3000
-BACKEND_URL=http://localhost:5000/respuesta
-PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-Inicia el backend Flask:
-
-4. Inicia el backend Flask:
-python app.py
-Inicia el bot de WhatsApp:
-
+2. Instala Dependencias:
+   npm install
+   pip install -r requirements.txt
+   
+3. Configurar el archivo env:
+   SESSION_NAME=axelbot
+   PORT=3000
+   BACKEND_URL= "http://localhost:5000/respuesta"
+   PUPPETEER_EXECUTABLE_PATH= "/usr/bin/chromium"
+   
+4. Iniciar el backend Flask:
+   python app.py
+   
 5. Inicia el bot de WhatsApp:
-npm start
+   npm start
+
+## 💎 Beneficios para tu negocio
+   -Ahorra tiempo: tus clientes reservan sin llamadas ni mensajes manuales.
+   -Imagen profesional: un bot premium que responde rápido y con estilo.
+   -Escalable: funciona para barberías, clínicas, restaurantes y cualquier negocio.
+   -Soporte exclusivo: instalación y configuración inicial incluida.
+
+## 💰 Beneficios para tu negocio
+   Por $120 USD recibes:
+      Bot WhatsApp + Backend Flask listos para producción.
+      Configuración en Railway/Fly.io con hosting estable.
+      Documentación clara y soporte inicial.
+      Personalización de nombre, servicios y promociones.
+
+## 📞 Contacto:
+   📲 +58 4126717861
+      ¿Quieres tu bot premium? 👉 Escríbenos y recibe tu demo exclusiva de 2–3 días antes de la instalación completa.
 
 
-💎 Beneficios para tu negocio
-Ahorra tiempo: tus clientes reservan sin llamadas ni mensajes manuales.
 
-Imagen profesional: un bot premium que responde rápido y con estilo.
 
-Escalable: funciona para barberías, clínicas, restaurantes y cualquier negocio.
-
-Soporte exclusivo: instalación y configuración inicial incluida.
-
-💰 Paquete Premium
-Por $120 USD recibes:
-
-Bot WhatsApp + Backend Flask listos para producción.
-
-Configuración en Railway/Fly.io con hosting estable.
-
-Documentación clara y soporte inicial.
-
-Personalización de nombre, servicios y promociones.
-
-📞 Contacto
-📲 +58 4126717861 ¿Quieres tu bot premium? 👉 Escríbenos y recibe tu demo exclusiva de 2–3 días antes de la instalación completa.
 
 
 

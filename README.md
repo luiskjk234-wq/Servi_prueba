@@ -25,10 +25,11 @@ Un bot de WhatsApp diseñado para **barberías, negocios locales y servicios pro
 
 ## ⚙️ Variables de entorno necesarias
 Configura en Railway o tu servidor:
-- `SESSION_NAME` → Nombre de la sesión de WhatsApp.
-- `PORT` → Puerto de ejecución (ej. 3000).
-- `BACKEND_URL` → URL del backend Flask (ej. `http://backend:5000/respuesta`).
-- `PUPPETEER_EXECUTABLE_PATH` → Ruta de Chromium (`/usr/bin/chromium` en Docker).
+
+- `SESSION_NAME` → Nombre de la sesión de WhatsApp.  
+- `PORT` → Puerto de ejecución (ej. 3000).  
+- `BACKEND_URL` → URL del backend Flask (ej. `http://backend:5000/respuesta`).  
+- `PUPPETEER_EXECUTABLE_PATH` → Ruta de Chromium (`/usr/bin/chromium` en Docker).  
 
 ---
 
@@ -40,18 +41,22 @@ Configura en Railway o tu servidor:
 2. Instala dependencias:
 npm install
 pip install -r requirements.txt
+Configura el archivo .env:
 
-3.Configurar el env:
+3. Configura el archivo env:
 SESSION_NAME=axelbot
 PORT=3000
 BACKEND_URL=http://localhost:5000/respuesta
 PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+Inicia el backend Flask:
 
-4. Iniciar el backend en flask:
+4. Inicia el backend Flask:
 python app.py
+Inicia el bot de WhatsApp:
 
-5. Iniciar el bot en Whatsapp: 
+5. Inicia el bot de WhatsApp:
 npm start
+
 
 💎 Beneficios para tu negocio
 Ahorra tiempo: tus clientes reservan sin llamadas ni mensajes manuales.
@@ -73,8 +78,10 @@ Documentación clara y soporte inicial.
 
 Personalización de nombre, servicios y promociones.
 
-📞 Contacto : +58 4126717861
-¿Quieres tu bot premium? 👉 Escríbenos y recibe tu demo exclusiva de 2–3 días antes de la instalación completa.
+📞 Contacto
+📲 +58 4126717861 ¿Quieres tu bot premium? 👉 Escríbenos y recibe tu demo exclusiva de 2–3 días antes de la instalación completa.
+
+
 
 
 

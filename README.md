@@ -63,6 +63,20 @@ Por $120 USD recibes:
 📲 +58 4126717861  
 ¿Quieres tu bot premium? Escríbenos y recibe tu demo exclusiva de 2–3 días antes de la instalación completa.
 
+## ⚠️ Uso Responsable
+
+AxelBot Premium utiliza **whatsapp-web.js** para conectarse a tu cuenta de WhatsApp.  
+Este sistema está diseñado para la **automatización responsable de citas y atención al cliente**.
+
+- 🚫 No debe usarse para envío masivo de mensajes ni prácticas de spam.  
+- 🚫 El uso indebido puede ocasionar bloqueos por parte de WhatsApp.  
+- ✅ Nosotros garantizamos la instalación y funcionamiento correcto del bot.  
+- ✅ El cliente es responsable de mantener un uso adecuado y dentro de las políticas de WhatsApp.  
+
+👉 Con AxelBot Premium tendrás un asistente confiable y profesional, siempre que se utilice de manera responsable.
+
+
+
 
 
 

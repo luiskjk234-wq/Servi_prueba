@@ -324,11 +324,11 @@ def responder_menu(mensaje):
     elif mensaje in ["5", "ubicacion", "ubicación", "donde estan", "dónde están"]:
         return "📍 *Ubicación:* Calz. de Tlalpan 5063, La Joya, CDMX. Frente a Converse 🚇"
     return (
-        "🤖 No entendí tu mensaje. Escribe una opción del menú:\n"
-        "1️⃣ Servicios\n2️⃣ Reservar\n3️⃣ Promociones\n4️⃣ Horarios\n5️⃣ Ubicación\n\n"
-        "O reserva directo: *Nombre, hora, servicio*"
-    )
-
+    "🙇‍♂️ Lo sentimos, en este momento estás hablando con el asistente conversacional de *Luis*.\n"
+    "Puedes usar el menú para reservar o consultar:\n"
+    "1️⃣ Servicios\n2️⃣ Reservar\n3️⃣ Promociones\n4️⃣ Horarios\n5️⃣ Ubicación\n\n"
+    "O si prefieres, escribe directamente: *Nombre, hora, servicio* para agendar tu cita."
+)
 # ------------------- LOG -------------------
 
 def registrar_log(numero, mensaje, respuesta):
@@ -344,4 +344,5 @@ if __name__ == '__main__':
     # En producción, usa Gunicorn:
     # pm2 start "gunicorn -w 2 -b 127.0.0.1:5000 app:app" --name Axelbot-Backend
     app.run(debug=True)
+
 

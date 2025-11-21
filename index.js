@@ -25,14 +25,25 @@ const client = new Client({
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process',
       '--disable-gpu',
       '--disable-software-rasterizer',
       '--disable-extensions',
       '--disable-background-networking',
-      '--disable-sync'
+      '--disable-sync',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-breakpad',
+      '--disable-component-update',
+      '--disable-domain-reliability',
+      '--disable-features=AudioServiceOutOfProcess',
+      '--disable-ipc-flooding-protection',
+      '--disable-print-preview',
+      '--disable-speech-api',
+      '--mute-audio',
+      '--no-first-run',
+      '--no-default-browser-check',
+      '--no-zygote',
+      '--single-process'
     ]
   }
 });
@@ -51,27 +62,23 @@ client.on('ready', () => {
 
 // Mensajes entrantes
 client.on('message', async msg => {
-  // 🚫 Ignorar mensajes recibidos antes de la conexión
-  const msgTime = msg.timestamp * 1000; // convertir a milisegundos
+  const msgTime = msg.timestamp * 1000;
   if (msgTime < startTime) {
     console.log(`⏳ Mensaje antiguo ignorado de ${msg.from}`);
     return;
   }
 
-  // 🚫 Ignorar mensajes duplicados
   if (processedMessages.has(msg.id._serialized)) {
     console.log(`🔁 Mensaje duplicado ignorado de ${msg.from}`);
     return;
   }
   processedMessages.add(msg.id._serialized);
 
-  // 🚫 Ignorar mensajes de grupos
   if (msg.from.endsWith('@g.us')) {
     console.log("🚫 Mensaje ignorado en grupo:", msg.from);
     return;
   }
 
-  // 🚫 Ignorar mensajes de estados/broadcast
   if (msg.from.endsWith('@broadcast') || msg.from === 'status@broadcast') {
     console.log("🚫 Mensaje ignorado en estados/broadcast:", msg.from);
     return;
@@ -88,7 +95,6 @@ client.on('message', async msg => {
       await msg.reply(data);
       console.log(`📤 Respuesta enviada a ${numero}: "${data}"`);
     } else {
-      // Respuesta amigable si el backend no devuelve nada
       await msg.reply("🙇‍♂️ Lo sentimos, en este momento estás hablando con el asistente conversacional de Luis.");
       console.log(`ℹ️ Mensaje fuera de flujo respondido a ${numero}`);
     }
@@ -120,16 +126,3 @@ process.on('uncaughtException', err => {
 
 // Inicializar cliente
 client.initialize();
-
-
-
-
-
-
-
-
-
-
-
-
-

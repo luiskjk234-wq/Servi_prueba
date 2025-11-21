@@ -9,6 +9,9 @@ const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000/respuesta';
 // Ruta al binario de Chromium descargado por Puppeteer
 const chromiumPath = '/root/.cache/puppeteer/chrome/linux-142.0.7444.175/chrome-linux64/chrome';
 
+// Guardamos el momento de inicio para filtrar mensajes antiguos
+let startTime = Date.now();
+
 const client = new Client({
   authStrategy: new LocalAuth({ clientId: sessionName, dataPath: './session' }),
   puppeteer: {
@@ -40,13 +43,27 @@ client.on('qr', qr => {
 // Cliente listo
 client.on('ready', () => {
   console.log("✅ Cliente conectado a WhatsApp y listo para recibir mensajes");
+  startTime = Date.now(); // actualizamos el tiempo exacto de conexión
 });
 
 // Mensajes entrantes
 client.on('message', async msg => {
-  // Ignorar mensajes de grupos
+  // 🚫 Ignorar mensajes recibidos antes de la conexión
+  const msgTime = msg.timestamp * 1000; // convertir a milisegundos
+  if (msgTime < startTime) {
+    console.log(`⏳ Mensaje antiguo ignorado de ${msg.from}`);
+    return;
+  }
+
+  // 🚫 Ignorar mensajes de grupos
   if (msg.from.endsWith('@g.us')) {
     console.log("🚫 Mensaje ignorado en grupo:", msg.from);
+    return;
+  }
+
+  // 🚫 Ignorar mensajes de estados/broadcast
+  if (msg.from.endsWith('@broadcast') || msg.from === 'status@broadcast') {
+    console.log("🚫 Mensaje ignorado en estados/broadcast:", msg.from);
     return;
   }
 
@@ -89,6 +106,8 @@ process.on('uncaughtException', err => {
 
 // Inicializar cliente
 client.initialize();
+
+
 
 
 

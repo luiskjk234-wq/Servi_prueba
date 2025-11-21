@@ -154,7 +154,7 @@ def responder():
         return jsonify(respuesta)
 
     # 🔑 Primero: si es ADMIN y es un comando, procesar aquí
-    if numero == ADMIN:
+if numero == ADMIN:
     if mensaje_limpio.strip().startswith("cancelar") or mensaje_limpio in [
         "ver citas", "ver agenda", "ver citas de hoy",
         "limpiar citas", "borrar citas", "cancelar todas",
@@ -163,7 +163,6 @@ def responder():
         respuesta = procesar_comando_admin(mensaje_limpio)
         registrar_log(numero, mensaje, respuesta)
         return jsonify(respuesta)  # 🔑 Esto corta el flujo
-
 
     # 🔑 Solo si no es comando, interpretar como cita o menú
     nombre, hora, servicio = interpretar_cita(mensaje)
@@ -355,6 +354,7 @@ if __name__ == '__main__':
     # En producción, usa Gunicorn:
     # pm2 start "gunicorn -w 2 -b 127.0.0.1:5000 app:app" --name Axelbot-Backend
     app.run(debug=True)
+
 
 
 

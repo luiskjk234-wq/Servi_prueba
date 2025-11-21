@@ -153,6 +153,18 @@ def responder():
         registrar_log(numero, mensaje, respuesta)
         return jsonify(respuesta)
 
+    # 🔑 Primero: si es ADMIN y es un comando, procesar aquí
+    if numero == ADMIN:
+        if mensaje_limpio.startswith("cancelar") or mensaje_limpio in [
+            "ver citas", "ver agenda", "ver citas de hoy",
+            "limpiar citas", "borrar citas", "cancelar todas",
+            "ver estadísticas"
+        ]:
+            respuesta = procesar_comando_admin(mensaje_limpio)
+            registrar_log(numero, mensaje, respuesta)
+            return jsonify(respuesta)
+
+    # 🔑 Solo si no es comando, interpretar como cita o menú
     nombre, hora, servicio = interpretar_cita(mensaje)
     print("🧠 Interpretado:", f"nombre={nombre}", f"hora={hora}", f"servicio={servicio}")
 
@@ -170,14 +182,12 @@ def responder():
                 f"⚠️ La hora *{hora}* ya está ocupada.\n"
                 f"¿Qué tal estas opciones?\n{texto_sugerencias}"
             )
-    elif numero == ADMIN:
-        respuesta = procesar_comando_admin(mensaje_limpio)
     else:
         respuesta = responder_menu(mensaje_limpio)
 
     registrar_log(numero, mensaje, respuesta)
     return jsonify(respuesta)
-
+    
 # ------------------- FUNCIONES DE CITAS -------------------
 
 def guardar_cita(nombre, hora, servicio):
@@ -344,5 +354,6 @@ if __name__ == '__main__':
     # En producción, usa Gunicorn:
     # pm2 start "gunicorn -w 2 -b 127.0.0.1:5000 app:app" --name Axelbot-Backend
     app.run(debug=True)
+
 
 

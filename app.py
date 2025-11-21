@@ -94,7 +94,6 @@ def normalizar_hora(hora_raw):
     return None
 
 def interpretar_cita(mensaje):
-    """Extrae nombre, hora y servicio de un mensaje libre."""
     mensaje = mensaje.lower().replace(";", ",").replace("|", ",").strip()
     partes = [p.strip() for p in mensaje.split(",")] if "," in mensaje else mensaje.split()
 
@@ -103,21 +102,26 @@ def interpretar_cita(mensaje):
     for parte in partes:
         if not parte:
             continue
-        if not nombre and any(c.isalpha() for c in parte):
-            nombre = parte.title()
-        elif not hora:
-            h = normalizar_hora(parte)
-            if h:
-                hora = h
-        elif parte in SERVICIOS_VALIDOS:
+        # Si aún no tenemos hora, intentamos parsear
+        h = normalizar_hora(parte)
+        if h and not hora:
+            hora = h
+            continue
+        # Si es un servicio válido
+        if parte in SERVICIOS_VALIDOS:
             servicio = SERVICIOS_VALIDOS[parte]
+            continue
         else:
             for clave in SERVICIOS_VALIDOS:
                 if clave in parte:
                     servicio = SERVICIOS_VALIDOS[clave]
+                    break
+        # Si no es hora ni servicio, lo tratamos como nombre (acumulamos palabras)
+        if not hora and not any(clave in parte for clave in SERVICIOS_VALIDOS):
+            nombre = (nombre + " " + parte.title()) if nombre else parte.title()
 
     return nombre, hora, servicio if servicio else "Corte"
-
+    
 def sugerir_horas(hora):
     """Sugiere horas cercanas si la solicitada está ocupada."""
     idx = [i for i, h in enumerate(HORAS_DISPONIBLES) if h == hora]
@@ -340,3 +344,4 @@ if __name__ == '__main__':
     # En producción, usa Gunicorn:
     # pm2 start "gunicorn -w 2 -b 127.0.0.1:5000 app:app" --name Axelbot-Backend
     app.run(debug=True)
+

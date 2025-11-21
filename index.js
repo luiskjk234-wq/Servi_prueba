@@ -12,6 +12,9 @@ const chromiumPath = '/root/.cache/puppeteer/chrome/linux-142.0.7444.175/chrome-
 // Guardamos el momento de inicio para filtrar mensajes antiguos
 let startTime = Date.now();
 
+// Set para evitar duplicados
+const processedMessages = new Set();
+
 const client = new Client({
   authStrategy: new LocalAuth({ clientId: sessionName, dataPath: './session' }),
   puppeteer: {
@@ -55,6 +58,13 @@ client.on('message', async msg => {
     return;
   }
 
+  // 🚫 Ignorar mensajes duplicados
+  if (processedMessages.has(msg.id._serialized)) {
+    console.log(`🔁 Mensaje duplicado ignorado de ${msg.from}`);
+    return;
+  }
+  processedMessages.add(msg.id._serialized);
+
   // 🚫 Ignorar mensajes de grupos
   if (msg.from.endsWith('@g.us')) {
     console.log("🚫 Mensaje ignorado en grupo:", msg.from);
@@ -77,6 +87,10 @@ client.on('message', async msg => {
     if (data) {
       await msg.reply(data);
       console.log(`📤 Respuesta enviada a ${numero}: "${data}"`);
+    } else {
+      // Respuesta amigable si el backend no devuelve nada
+      await msg.reply("🙇‍♂️ Lo sentimos, en este momento estás hablando con el asistente conversacional de Luis.");
+      console.log(`ℹ️ Mensaje fuera de flujo respondido a ${numero}`);
     }
   } catch (error) {
     console.error("❌ Error al enviar al backend:", error.message);
@@ -106,6 +120,7 @@ process.on('uncaughtException', err => {
 
 // Inicializar cliente
 client.initialize();
+
 
 
 

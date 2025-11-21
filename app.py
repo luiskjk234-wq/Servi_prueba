@@ -9,11 +9,13 @@ ADMIN = "584126717861"
 ARCHIVO_CITAS = "citas.json"
 LOG = "log.txt"
 
+# Horarios disponibles (8:00 a.m. – 9:00 p.m. cada 30 min)
 HORAS_DISPONIBLES = [
     f"{h}:{m:02d} {'a.m.' if h < 12 else 'p.m.'}"
     for h in range(8, 21) for m in (0, 30)
 ]
 
+# Servicios válidos con alias
 SERVICIOS_VALIDOS = {
     "corte": "Corte",
     "fade": "Corte Fade",
@@ -28,7 +30,10 @@ SERVICIOS_VALIDOS = {
     "barb": "Corte + barba"
 }
 
+# ------------------- UTILIDADES -------------------
+
 def validar_archivo_citas():
+    """Garantiza que citas.json siempre exista y sea válido."""
     try:
         with open(ARCHIVO_CITAS, "r", encoding="utf-8") as f:
             contenido = f.read().strip()
@@ -41,64 +46,64 @@ def validar_archivo_citas():
         print("⚠️ Archivo de citas reiniciado por corrupción o vacío.")
 
 def normalizar_hora(hora_raw):
+    """Acepta múltiples formatos de hora y devuelve estándar."""
     if not hora_raw:
         return None
-    hora_raw = hora_raw.lower().strip()
-    hora_raw = hora_raw.replace("a. m.", "am").replace("p. m.", "pm")
-    hora_raw = hora_raw.replace("a.m.", "am").replace("p.m.", "pm")
-    hora_raw = hora_raw.replace("a m", "am").replace("p m", "pm")
-    hora_raw = hora_raw.replace(" ", "").replace(".", "").replace(":", "").replace(";", "").replace("-", "")
+    h = hora_raw.lower().strip()
+    h = h.replace("a. m.", "am").replace("p. m.", "pm")
+    h = h.replace("a.m.", "am").replace("p.m.", "pm")
+    h = h.replace(" ", "").replace(".", "").replace(":", "").replace("-", "")
 
-    match = re.match(r"^(\d{1,2})(\d{2})(a|p)m?$", hora_raw)
+    # Ej: 430pm → 4:30 p.m.
+    match = re.match(r"^(\d{1,2})(\d{2})(a|p)m$", h)
     if match:
-        h = int(match.group(1))
-        m = int(match.group(2))
+        hh, mm = int(match.group(1)), int(match.group(2))
         sufijo = "a.m." if match.group(3) == "a" else "p.m."
-        if 0 <= h <= 12 and 0 <= m < 60:
-            return f"{h}:{m:02d} {sufijo}"
+        if 0 <= hh <= 12 and 0 <= mm < 60:
+            return f"{hh}:{mm:02d} {sufijo}"
 
-    match = re.match(r"^(\d{1,2})(a|p)m?$", hora_raw)
+    # Ej: 4pm → 4:00 p.m.
+    match = re.match(r"^(\d{1,2})(a|p)m$", h)
     if match:
-        h = int(match.group(1))
+        hh = int(match.group(1))
         sufijo = "a.m." if match.group(2) == "a" else "p.m."
-        if 0 <= h <= 12:
-            return f"{h}:00 {sufijo}"
+        return f"{hh}:00 {sufijo}"
 
-    match = re.match(r"^([01]?\d|2[0-3])$", hora_raw)
+    # Ej: 16 → 4:00 p.m.
+    match = re.match(r"^([01]?\d|2[0-3])$", h)
     if match:
-        h = int(match.group(1))
-        sufijo = "a.m." if h < 12 else "p.m."
-        h = h if 1 <= h <= 12 else h - 12 if h > 12 else 12
-        return f"{h}:00 {sufijo}"
+        hh = int(match.group(1))
+        sufijo = "a.m." if hh < 12 else "p.m."
+        hh = hh if 1 <= hh <= 12 else hh - 12 if hh > 12 else 12
+        return f"{hh}:00 {sufijo}"
 
-    match = re.match(r"^([01]?\d|2[0-3])([0-5]\d)$", hora_raw)
+    # Ej: 1630 → 4:30 p.m.
+    match = re.match(r"^([01]?\d|2[0-3])([0-5]\d)$", h)
     if match:
-        h = int(match.group(1))
-        m = int(match.group(2))
-        sufijo = "a.m." if h < 12 else "p.m."
-        h = h if 1 <= h <= 12 else h - 12 if h > 12 else 12
-        return f"{h}:{m:02d} {sufijo}"
+        hh, mm = int(match.group(1)), int(match.group(2))
+        sufijo = "a.m." if hh < 12 else "p.m."
+        hh = hh if 1 <= hh <= 12 else hh - 12 if hh > 12 else 12
+        return f"{hh}:{mm:02d} {sufijo}"
 
-    for h in HORAS_DISPONIBLES:
-        h_flexible = h.replace(".", "").replace(" ", "").replace(":", "")
-        if hora_raw == h_flexible:
-            return h
+    # Buscar coincidencia flexible en HORAS_DISPONIBLES
+    for h_disp in HORAS_DISPONIBLES:
+        h_flex = h_disp.replace(".", "").replace(" ", "").replace(":", "")
+        if h == h_flex:
+            return h_disp
 
     return None
 
 def interpretar_cita(mensaje):
-    mensaje = mensaje.lower().replace(";", ",").replace("|", ",").replace("  ", " ").strip()
+    """Extrae nombre, hora y servicio de un mensaje libre."""
+    mensaje = mensaje.lower().replace(";", ",").replace("|", ",").strip()
     partes = [p.strip() for p in mensaje.split(",")] if "," in mensaje else mensaje.split()
 
-    nombre = None
-    hora = None
-    servicio = "Corte"
+    nombre, hora, servicio = None, None, "Corte"
 
     for parte in partes:
-        parte = parte.strip()
         if not parte:
             continue
-        if not nombre and parte.isalpha():
+        if not nombre and any(c.isalpha() for c in parte):
             nombre = parte.title()
         elif not hora:
             h = normalizar_hora(parte)
@@ -106,16 +111,15 @@ def interpretar_cita(mensaje):
                 hora = h
         elif parte in SERVICIOS_VALIDOS:
             servicio = SERVICIOS_VALIDOS[parte]
-        elif any(s in parte for s in SERVICIOS_VALIDOS):
+        else:
             for clave in SERVICIOS_VALIDOS:
                 if clave in parte:
                     servicio = SERVICIOS_VALIDOS[clave]
 
-    if nombre and hora:
-        return nombre, hora, servicio
-    return None, None, None
+    return nombre, hora, servicio if servicio else "Corte"
 
 def sugerir_horas(hora):
+    """Sugiere horas cercanas si la solicitada está ocupada."""
     idx = [i for i, h in enumerate(HORAS_DISPONIBLES) if h == hora]
     if not idx:
         return []
@@ -127,10 +131,12 @@ def sugerir_horas(hora):
             sugerencias.append(HORAS_DISPONIBLES[j])
     return sugerencias
 
+# ------------------- ENDPOINT PRINCIPAL -------------------
+
 @app.route('/respuesta', methods=['POST'])
 def responder():
     validar_archivo_citas()
-    data = request.get_json()
+    data = request.get_json() or {}
     mensaje = data.get('mensaje', '').strip()
     numero = data.get('numero', '').replace("@c.us", "").replace("+", "")
     mensaje_limpio = mensaje.lower()
@@ -139,7 +145,9 @@ def responder():
     print("📞 Número recibido:", numero)
 
     if not mensaje:
-        return jsonify("🤖 Escribe algo para que pueda ayudarte.")
+        respuesta = "🤖 Escribe algo para que pueda ayudarte."
+        registrar_log(numero, mensaje, respuesta)
+        return jsonify(respuesta)
 
     nombre, hora, servicio = interpretar_cita(mensaje)
     print("🧠 Interpretado:", f"nombre={nombre}", f"hora={hora}", f"servicio={servicio}")
@@ -153,7 +161,7 @@ def responder():
             )
         else:
             sugerencias = sugerir_horas(hora)
-            texto_sugerencias = "\n".join([f"- {h}" for h in sugerencias])
+            texto_sugerencias = "\n".join([f"- {h}" for h in sugerencias]) or "No hay horarios alternativos."
             respuesta = (
                 f"⚠️ La hora *{hora}* ya está ocupada.\n"
                 f"¿Qué tal estas opciones?\n{texto_sugerencias}"
@@ -166,6 +174,8 @@ def responder():
     registrar_log(numero, mensaje, respuesta)
     return jsonify(respuesta)
 
+# ------------------- FUNCIONES DE CITAS -------------------
+
 def guardar_cita(nombre, hora, servicio):
     fecha = datetime.now().strftime("%Y-%m-%d")
     nueva_cita = {"nombre": nombre, "hora": hora, "fecha": fecha, "servicio": servicio}
@@ -173,10 +183,8 @@ def guardar_cita(nombre, hora, servicio):
 
     try:
         with open(ARCHIVO_CITAS, "r", encoding="utf-8") as f:
-            contenido = f.read().strip()
-            citas = json.loads(contenido) if contenido else []
-    except Exception as e:
-        print("⚠️ Error al leer citas.json:", e)
+            citas = json.load(f)
+    except:
         citas = []
 
     if any(c["fecha"] == fecha and c["hora"] == hora and c["nombre"] == nombre for c in citas):
@@ -187,6 +195,8 @@ def guardar_cita(nombre, hora, servicio):
     with open(ARCHIVO_CITAS, "w", encoding="utf-8") as f:
         json.dump(citas, f, indent=2, ensure_ascii=False)
     return True
+
+# ------------------- ADMIN -------------------
 
 def procesar_comando_admin(mensaje):
     if mensaje in ["ver citas", "ver agenda"]:
@@ -235,10 +245,12 @@ def cancelar_cita(mensaje):
     hora = normalizar_hora(partes[1].strip())
     fecha = datetime.now().strftime("%Y-%m-%d")
 
+    if not hora:
+        return "⚠️ Hora inválida. Ejemplo: *cancelar Luis, 4:30 p.m.*"
+
     try:
         with open(ARCHIVO_CITAS, "r", encoding="utf-8") as f:
-            contenido = f.read().strip()
-            citas = json.loads(contenido) if contenido else []
+            citas = json.load(f)
     except Exception as e:
         print("⚠️ Error al leer citas.json:", e)
         return "⚠️ No se pudo acceder a la agenda."
@@ -257,17 +269,26 @@ def estadisticas():
             citas = json.load(f)
         total = len(citas)
         por_fecha = {}
+        por_servicio = {}
         for c in citas:
             por_fecha[c["fecha"]] = por_fecha.get(c["fecha"], 0) + 1
+            por_servicio[c["servicio"]] = por_servicio.get(c["servicio"], 0) + 1
+
         texto = f"📊 *Estadísticas:*\nTotal de citas: {total}\n"
         for fecha, cantidad in por_fecha.items():
             texto += f"- {fecha}: {cantidad} cita(s)\n"
+        if por_servicio:
+            texto += "🧾 Por servicio:\n"
+            for serv, qty in por_servicio.items():
+                texto += f"- {serv}: {qty}\n"
         return texto
     except:
         return "⚠️ No se pudo calcular estadísticas."
 
+# ------------------- MENÚ -------------------
+
 def responder_menu(mensaje):
-    if mensaje in ["hola", "buenas", "buenos días", "buenas tardes"]:
+    if mensaje in ["hola", "buenas", "buenos dias", "buenos días", "buenas tardes", "hey"]:
         return (
             "👋 ¡Hola! Bienvenido a *Barbería El Estilo* 💈\n"
             "¿En qué puedo ayudarte hoy?\n\n"
@@ -276,35 +297,46 @@ def responder_menu(mensaje):
             "2️⃣ Reservar cita\n"
             "3️⃣ Promociones\n"
             "4️⃣ Horarios\n"
-            "5️⃣ Ubicación"
+            "5️⃣ Ubicación\n\n"
+            "También puedes escribir: *Nombre, hora, servicio* para reservar directo."
         )
     elif mensaje in ["1", "servicios"]:
         return (
             "💈 *Nuestros servicios:*\n"
             "- Corte Fade\n- Corte + barba\n- Diseño de cejas\n- Recortes escolares\n\n"
-            "Escribe: *Tu nombre, hora, servicio*"
+            "Para reservar: *Nombre, hora, servicio*\nEjemplo: *Luis Pérez, 4:30 p.m., Corte + barba*"
         )
     elif mensaje in ["2", "reservar", "cita"]:
         return (
             "📆 Para reservar tu cita, escribe:\n"
-            "*Nombre, hora, servicio*\nEjemplo: *Luis, 4:30 p.m., Corte + barba*"
+            "*Nombre, hora, servicio*\nEjemplo: *Luis Pérez, 4:30 p.m., Corte + barba*"
         )
     elif mensaje in ["3", "promociones", "promo"]:
         return (
             "🎉 *Promoción del día:*\nCorte + barba por *$150 MXN* 💸\nVálido hasta las 7:00 p.m."
         )
     elif mensaje in ["4", "horarios", "horario"]:
-        return "🕒 *Horario:* Lunes a Domingo, 8:30 a.m. a 9:00 p.m."
-    elif mensaje in ["5", "ubicación", "dónde están"]:
+        return "🕒 *Horario:* Lunes a Domingo, 8:00 a.m. a 9:00 p.m. cada 30 min."
+    elif mensaje in ["5", "ubicacion", "ubicación", "donde estan", "dónde están"]:
         return "📍 *Ubicación:* Calz. de Tlalpan 5063, La Joya, CDMX. Frente a Converse 🚇"
     return (
         "🤖 No entendí tu mensaje. Escribe una opción del menú:\n"
-        "1️⃣ Servicios\n2️⃣ Reservar\n3️⃣ Promociones\n4️⃣ Horarios\n5️⃣ Ubicación"
+        "1️⃣ Servicios\n2️⃣ Reservar\n3️⃣ Promociones\n4️⃣ Horarios\n5️⃣ Ubicación\n\n"
+        "O reserva directo: *Nombre, hora, servicio*"
     )
 
+# ------------------- LOG -------------------
+
 def registrar_log(numero, mensaje, respuesta):
-    with open(LOG, "a", encoding="utf-8") as f:
-        f.write(f"{datetime.now()} | {numero} | {mensaje} | {respuesta}\n")
+    try:
+        with open(LOG, "a", encoding="utf-8") as f:
+            f.write(f"{datetime.now().isoformat()} | {numero} | {mensaje} | {respuesta}\n")
+    except:
+        print("⚠️ No se pudo escribir en el log.")
+
+# ------------------- MAIN -------------------
 
 if __name__ == '__main__':
+    # En producción, usa Gunicorn:
+    # pm2 start "gunicorn -w 2 -b 127.0.0.1:5000 app:app" --name Axelbot-Backend
     app.run(debug=True)

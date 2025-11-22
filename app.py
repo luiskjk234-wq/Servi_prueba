@@ -154,15 +154,32 @@ def responder():
         return jsonify(respuesta)
 
     # 🔑 Primero: si es ADMIN y es un comando, procesar aquí
-if numero == ADMIN:
-    if mensaje_limpio.strip().startswith("cancelar") or mensaje_limpio in [
-        "ver citas", "ver agenda", "ver citas de hoy",
-        "limpiar citas", "borrar citas", "cancelar todas",
-        "ver estadísticas"
-    ]:
-        respuesta = procesar_comando_admin(mensaje_limpio)
+@app.route('/respuesta', methods=['POST'])
+def responder():
+    validar_archivo_citas()
+    data = request.get_json() or {}
+    mensaje = data.get('mensaje', '').strip()
+    numero = data.get('numero', '').replace("@c.us", "").replace("+", "")
+    mensaje_limpio = mensaje.lower()
+
+    print("📨 Mensaje recibido:", mensaje)
+    print("📞 Número recibido:", numero)
+
+    if not mensaje:
+        respuesta = "🤖 Escribe algo para que pueda ayudarte."
         registrar_log(numero, mensaje, respuesta)
-        return jsonify(respuesta)  # 🔑 Esto corta el flujo
+        return jsonify(respuesta)
+
+    # 🔑 Bloque ADMIN correctamente indentado
+    if numero == ADMIN:
+        if mensaje_limpio.strip().startswith("cancelar") or mensaje_limpio in [
+            "ver citas", "ver agenda", "ver citas de hoy",
+            "limpiar citas", "borrar citas", "cancelar todas",
+            "ver estadísticas"
+        ]:
+            respuesta = procesar_comando_admin(mensaje_limpio)
+            registrar_log(numero, mensaje, respuesta)
+            return jsonify(respuesta)  # 🔑 Esto ya está dentro de la función
 
     # 🔑 Solo si no es comando, interpretar como cita o menú
     nombre, hora, servicio = interpretar_cita(mensaje)
@@ -352,6 +369,7 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 

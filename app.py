@@ -351,9 +351,9 @@ def registrar_log(numero, mensaje, respuesta):
 # ------------------- MAIN -------------------
 
 if __name__ == '__main__':
-    # En producción, usa Gunicorn:
-    # pm2 start "gunicorn -w 2 -b 127.0.0.1:5000 app:app" --name Axelbot-Backend
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
+
 
 
 

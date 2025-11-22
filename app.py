@@ -33,7 +33,6 @@ SERVICIOS_VALIDOS = {
 # ------------------- UTILIDADES -------------------
 
 def validar_archivo_citas():
-    """Garantiza que citas.json siempre exista y sea válido."""
     try:
         with open(ARCHIVO_CITAS, "r", encoding="utf-8") as f:
             contenido = f.read().strip()
@@ -46,7 +45,6 @@ def validar_archivo_citas():
         print("⚠️ Archivo de citas reiniciado por corrupción o vacío.")
 
 def normalizar_hora(hora_raw):
-    """Acepta múltiples formatos de hora y devuelve estándar."""
     if not hora_raw:
         return None
     h = hora_raw.lower().strip()
@@ -54,7 +52,6 @@ def normalizar_hora(hora_raw):
     h = h.replace("a.m.", "am").replace("p.m.", "pm")
     h = h.replace(" ", "").replace(".", "").replace(":", "").replace("-", "")
 
-    # Ej: 430pm → 4:30 p.m.
     match = re.match(r"^(\d{1,2})(\d{2})(a|p)m$", h)
     if match:
         hh, mm = int(match.group(1)), int(match.group(2))
@@ -62,14 +59,12 @@ def normalizar_hora(hora_raw):
         if 0 <= hh <= 12 and 0 <= mm < 60:
             return f"{hh}:{mm:02d} {sufijo}"
 
-    # Ej: 4pm → 4:00 p.m.
     match = re.match(r"^(\d{1,2})(a|p)m$", h)
     if match:
         hh = int(match.group(1))
         sufijo = "a.m." if match.group(2) == "a" else "p.m."
         return f"{hh}:00 {sufijo}"
 
-    # Ej: 16 → 4:00 p.m.
     match = re.match(r"^([01]?\d|2[0-3])$", h)
     if match:
         hh = int(match.group(1))
@@ -77,7 +72,6 @@ def normalizar_hora(hora_raw):
         hh = hh if 1 <= hh <= 12 else hh - 12 if hh > 12 else 12
         return f"{hh}:00 {sufijo}"
 
-    # Ej: 1630 → 4:30 p.m.
     match = re.match(r"^([01]?\d|2[0-3])([0-5]\d)$", h)
     if match:
         hh, mm = int(match.group(1)), int(match.group(2))
@@ -85,7 +79,6 @@ def normalizar_hora(hora_raw):
         hh = hh if 1 <= hh <= 12 else hh - 12 if hh > 12 else 12
         return f"{hh}:{mm:02d} {sufijo}"
 
-    # Buscar coincidencia flexible en HORAS_DISPONIBLES
     for h_disp in HORAS_DISPONIBLES:
         h_flex = h_disp.replace(".", "").replace(" ", "").replace(":", "")
         if h == h_flex:
@@ -102,12 +95,10 @@ def interpretar_cita(mensaje):
     for parte in partes:
         if not parte:
             continue
-        # Si aún no tenemos hora, intentamos parsear
         h = normalizar_hora(parte)
         if h and not hora:
             hora = h
             continue
-        # Si es un servicio válido
         if parte in SERVICIOS_VALIDOS:
             servicio = SERVICIOS_VALIDOS[parte]
             continue
@@ -116,14 +107,12 @@ def interpretar_cita(mensaje):
                 if clave in parte:
                     servicio = SERVICIOS_VALIDOS[clave]
                     break
-        # Si no es hora ni servicio, lo tratamos como nombre (acumulamos palabras)
         if not hora and not any(clave in parte for clave in SERVICIOS_VALIDOS):
             nombre = (nombre + " " + parte.title()) if nombre else parte.title()
 
     return nombre, hora, servicio if servicio else "Corte"
-    
+
 def sugerir_horas(hora):
-    """Sugiere horas cercanas si la solicitada está ocupada."""
     idx = [i for i, h in enumerate(HORAS_DISPONIBLES) if h == hora]
     if not idx:
         return []
@@ -134,8 +123,6 @@ def sugerir_horas(hora):
         if 0 <= j < len(HORAS_DISPONIBLES):
             sugerencias.append(HORAS_DISPONIBLES[j])
     return sugerencias
-
-# ------------------- ENDPOINT PRINCIPAL -------------------
 
 # ------------------- ENDPOINT PRINCIPAL -------------------
 
@@ -155,7 +142,6 @@ def responder():
         registrar_log(numero, mensaje, respuesta)
         return jsonify(respuesta)
 
-    # 🔑 Bloque ADMIN
     if numero == ADMIN:
         if mensaje_limpio.strip().startswith("cancelar") or mensaje_limpio in [
             "ver citas", "ver agenda", "ver citas de hoy",
@@ -166,7 +152,6 @@ def responder():
             registrar_log(numero, mensaje, respuesta)
             return jsonify(respuesta)
 
-    # 🔑 Interpretar cita o menú
     nombre, hora, servicio = interpretar_cita(mensaje)
     print("🧠 Interpretado:", f"nombre={nombre}", f"hora={hora}", f"servicio={servicio}")
 
@@ -190,7 +175,6 @@ def responder():
     registrar_log(numero, mensaje, respuesta)
     return jsonify(respuesta)
 
-    
 # ------------------- FUNCIONES DE CITAS -------------------
 
 def guardar_cita(nombre, hora, servicio):
@@ -212,7 +196,6 @@ def guardar_cita(nombre, hora, servicio):
     with open(ARCHIVO_CITAS, "w", encoding="utf-8") as f:
         json.dump(citas, f, indent=2, ensure_ascii=False)
     return True
-
 # ------------------- ADMIN -------------------
 
 def procesar_comando_admin(mensaje):
@@ -337,11 +320,12 @@ def responder_menu(mensaje):
     elif mensaje in ["5", "ubicacion", "ubicación", "donde estan", "dónde están"]:
         return "📍 *Ubicación:* Calz. de Tlalpan 5063, La Joya, CDMX. Frente a Converse 🚇"
     return (
-    "🙇‍♂️ Lo sentimos, en este momento estás hablando con el asistente conversacional de *Luis*.\n"
-    "Puedes usar el menú para reservar o consultar:\n"
-    "1️⃣ Servicios\n2️⃣ Reservar\n3️⃣ Promociones\n4️⃣ Horarios\n5️⃣ Ubicación\n\n"
-    "O si prefieres, escribe directamente: *Nombre, hora, servicio* para agendar tu cita."
-)
+        "🙇‍♂️ Lo sentimos, en este momento estás hablando con el asistente conversacional de *Luis*.\n"
+        "Puedes usar el menú para reservar o consultar:\n"
+        "1️⃣ Servicios\n2️⃣ Reservar\n3️⃣ Promociones\n4️⃣ Horarios\n5️⃣ Ubicación\n\n"
+        "O si prefieres, escribe directamente: *Nombre, hora, servicio* para agendar tu cita."
+    )
+
 # ------------------- LOG -------------------
 
 def registrar_log(numero, mensaje, respuesta):
@@ -355,6 +339,10 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+
+
+
 
 
 

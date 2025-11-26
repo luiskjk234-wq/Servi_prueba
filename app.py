@@ -90,7 +90,7 @@ def interpretar_cita(mensaje):
     mensaje = mensaje.lower().replace(";", ",").replace("|", ",").strip()
     partes = [p.strip() for p in mensaje.split(",")] if "," in mensaje else mensaje.split()
 
-    nombre, hora, servicio = None, None, "Corte"
+    nombre, hora, servicio = None, None, None
 
     for parte in partes:
         if not parte:
@@ -99,18 +99,20 @@ def interpretar_cita(mensaje):
         if h and not hora:
             hora = h
             continue
+
         if parte in SERVICIOS_VALIDOS:
             servicio = SERVICIOS_VALIDOS[parte]
             continue
-        else:
-            for clave in SERVICIOS_VALIDOS:
-                if clave in parte:
-                    servicio = SERVICIOS_VALIDOS[clave]
-                    break
+       
+        for clave in sorted(SERVICIOS_VALIDOS.keys(), key=len, reverse=True):
+            if clave in parte:
+                servicio = SERVICIOS_VALIDOS[clave]
+                break
         if not hora and not any(clave in parte for clave in SERVICIOS_VALIDOS):
             nombre = (nombre + " " + parte.title()) if nombre else parte.title()
 
     return nombre, hora, servicio if servicio else "Corte"
+
 
 def sugerir_horas(hora):
     idx = [i for i, h in enumerate(HORAS_DISPONIBLES) if h == hora]
@@ -339,6 +341,7 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 

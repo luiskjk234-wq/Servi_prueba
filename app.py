@@ -17,17 +17,19 @@ HORAS_DISPONIBLES = [
 
 # Servicios válidos con alias
 SERVICIOS_VALIDOS = {
-    "corte": "Corte",
-    "fade": "Corte Fade",
-    "barba": "Corte + barba",
-    "cejas": "Diseño de cejas",
-    "escolar": "Recortes escolares",
-    "cf": "Corte Fade",
-    "cb": "Corte + barba",
-    "corte fade": "Corte Fade",
     "corte+barba": "Corte + barba",
+    "cb": "Corte + barba",
+    "barba": "Corte + barba",
+    "barb": "Corte + barba",
+
+    "corte fade": "Corte Fade",
     "cortef": "Corte Fade",
-    "barb": "Corte + barba"
+    "fade": "Corte Fade",
+    "cf": "Corte Fade",
+
+    "corte": "Corte",
+    "cejas": "Diseño de cejas",
+    "escolar": "Recortes escolares"
 }
 
 # ------------------- UTILIDADES -------------------
@@ -347,6 +349,7 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 

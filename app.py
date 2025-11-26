@@ -90,29 +90,35 @@ def interpretar_cita(mensaje):
     mensaje = mensaje.lower().replace(";", ",").replace("|", ",").strip()
     partes = [p.strip() for p in mensaje.split(",")] if "," in mensaje else mensaje.split()
 
-    nombre, hora, servicio = None, None, None
+    nombre, hora, servicio = None, None, None  # ⚠️ ya no inicializamos en "Corte"
 
     for parte in partes:
         if not parte:
             continue
+
+        # Normalizar hora
         h = normalizar_hora(parte)
         if h and not hora:
             hora = h
             continue
 
+        # Coincidencia exacta primero
         if parte in SERVICIOS_VALIDOS:
             servicio = SERVICIOS_VALIDOS[parte]
             continue
-       
+
+        # Coincidencia parcial, priorizando claves largas
         for clave in sorted(SERVICIOS_VALIDOS.keys(), key=len, reverse=True):
             if clave in parte:
                 servicio = SERVICIOS_VALIDOS[clave]
                 break
+
+        # Si no es hora ni servicio, lo tratamos como parte del nombre
         if not hora and not any(clave in parte for clave in SERVICIOS_VALIDOS):
             nombre = (nombre + " " + parte.title()) if nombre else parte.title()
 
+    # Fallback: si no se detectó servicio, usar "Corte"
     return nombre, hora, servicio if servicio else "Corte"
-
 
 def sugerir_horas(hora):
     idx = [i for i, h in enumerate(HORAS_DISPONIBLES) if h == hora]
@@ -341,6 +347,7 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 

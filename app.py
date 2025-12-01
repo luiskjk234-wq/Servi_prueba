@@ -253,24 +253,36 @@ def cancelar_cita(mensaje):
     partes = mensaje.replace("cancelar", "", 1).split(",")
     if len(partes) < 2:
         return "⚠️ Escribe: *cancelar Nombre, hora*"
-    nombre = partes[0].strip().title()
+    nombre_raw = partes[0].strip()
     hora = normalizar_hora(partes[1].strip())
     fecha = datetime.now().strftime("%Y-%m-%d")
 
     if not hora:
         return "⚠️ Hora inválida. Ejemplo: *cancelar Luis, 4:30 p.m.*"
 
+    def normalizar_texto(txt):
+        return quitar_acentos(txt.strip().lower())
+
     try:
         with open(ARCHIVO_CITAS, "r+", encoding="utf-8") as f:
             citas = json.load(f)
-            nuevas = [c for c in citas if not (c["nombre"] == nombre and c["hora"] == hora and c["fecha"] == fecha)]
+            nuevas = [
+                c for c in citas
+                if not (
+                    normalizar_texto(c["nombre"]) == normalizar_texto(nombre_raw)
+                    and normalizar_texto(c["hora"]) == normalizar_texto(hora)
+                    and c["fecha"] == fecha
+                )
+            ]
             f.seek(0)
             json.dump(nuevas, f, indent=2, ensure_ascii=False)
             f.truncate()
     except:
         return "⚠️ No se pudo acceder a la agenda."
 
-    return f"❌ Cita de *{nombre}* a las *{hora}* cancelada."
+    if len(nuevas) == len(citas):
+        return "⚠️ No se encontró esa cita para cancelar."
+    return f"❌ Cita de *{nombre_raw.title()}* a las *{hora}* cancelada."
 
 def estadisticas():
     try:
@@ -346,5 +358,6 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 

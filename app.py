@@ -284,6 +284,7 @@ def cancelar_cita(mensaje):
         return "⚠️ No se encontró esa cita para cancelar."
     return f"❌ Cita de *{nombre_raw.title()}* a las *{hora}* cancelada."
 
+
 def estadisticas():
     try:
         with open(ARCHIVO_CITAS, "r", encoding="utf-8") as f:
@@ -358,6 +359,7 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 

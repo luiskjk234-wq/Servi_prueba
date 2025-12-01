@@ -328,7 +328,7 @@ def responder_menu(mensaje):
     elif mensaje in ["5", "ubicacion", "ubicación", "donde estan", "dónde están"]:
         return "📍 *Ubicación:* Calz. de Tlalpan 5063, La Joya, CDMX. Frente a Converse 🚇"
     return (
-        "🙇‍♂️ Lo sentimos, en este momento estás hablando con el asistente conversacional de *AxelBot Pro*.\n"
+        "🙇‍♂️ Lo sentimos, en este momento estás hablando con el asistente conversacional *AxelBot Pro*.\n"
         "Puedes usar el menú para reservar o consultar:\n"
         "1️⃣ Servicios\n2️⃣ Reservar\n3️⃣ Promociones\n4️⃣ Horarios\n5️⃣ Ubicación\n\n"
         "O si prefieres, escribe directamente: *Nombre, hora, servicio* para agendar tu cita."
@@ -346,3 +346,4 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+

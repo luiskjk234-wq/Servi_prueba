@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import json
 import re
+import unicodedata
 from datetime import datetime
 
 app = Flask(__name__)
@@ -33,6 +34,12 @@ SERVICIOS_VALIDOS = {
 }
 
 # ------------------- UTILIDADES -------------------
+
+def quitar_acentos(texto):
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', texto)
+        if unicodedata.category(c) != 'Mn'
+    )
 
 def validar_archivo_citas():
     try:
@@ -92,34 +99,29 @@ def interpretar_cita(mensaje):
     mensaje = mensaje.lower().replace(";", ",").replace("|", ",").strip()
     partes = [p.strip() for p in mensaje.split(",")] if "," in mensaje else mensaje.split()
 
-    nombre, hora, servicio = None, None, None  # ⚠️ ya no inicializamos en "Corte"
+    nombre, hora, servicio = None, None, None
 
     for parte in partes:
         if not parte:
             continue
 
-        # Normalizar hora
         h = normalizar_hora(parte)
         if h and not hora:
             hora = h
             continue
 
-        # Coincidencia exacta primero
         if parte in SERVICIOS_VALIDOS:
             servicio = SERVICIOS_VALIDOS[parte]
             continue
 
-        # Coincidencia parcial, priorizando claves largas
         for clave in sorted(SERVICIOS_VALIDOS.keys(), key=len, reverse=True):
             if clave in parte:
                 servicio = SERVICIOS_VALIDOS[clave]
                 break
 
-        # Si no es hora ni servicio, lo tratamos como parte del nombre
         if not hora and not any(clave in parte for clave in SERVICIOS_VALIDOS):
             nombre = (nombre + " " + parte.title()) if nombre else parte.title()
 
-    # Fallback: si no se detectó servicio, usar "Corte"
     return nombre, hora, servicio if servicio else "Corte"
 
 def sugerir_horas(hora):
@@ -143,6 +145,7 @@ def responder():
     mensaje = data.get('mensaje', '').strip()
     numero = data.get('numero', '').replace("@c.us", "").replace("+", "")
     mensaje_limpio = mensaje.lower()
+    mensaje_sin_acentos = quitar_acentos(mensaje_limpio)
 
     print("📨 Mensaje recibido:", mensaje)
     print("📞 Número recibido:", numero)
@@ -153,12 +156,12 @@ def responder():
         return jsonify(respuesta)
 
     if numero == ADMIN:
-        if mensaje_limpio.strip().startswith("cancelar") or mensaje_limpio in [
+        if mensaje_sin_acentos.strip().startswith("cancelar") or mensaje_sin_acentos in [
             "ver citas", "ver agenda", "ver citas de hoy",
             "limpiar citas", "borrar citas", "cancelar todas",
-            "ver estadísticas"
+            "ver estadisticas"
         ]:
-            respuesta = procesar_comando_admin(mensaje_limpio)
+            respuesta = procesar_comando_admin(mensaje_sin_acentos)
             registrar_log(numero, mensaje, respuesta)
             return jsonify(respuesta)
 
@@ -194,7 +197,6 @@ def guardar_cita(nombre, hora, servicio):
     try:
         with open(ARCHIVO_CITAS, "r+", encoding="utf-8") as f:
             citas = json.load(f)
-            # Verificar duplicado
             if any(c["fecha"] == fecha and c["hora"] == hora and c["nombre"] == nombre for c in citas):
                 return False
             citas.append(nueva_cita)
@@ -217,7 +219,7 @@ def procesar_comando_admin(mensaje):
         return limpiar_citas()
     if mensaje == "cancelar todas":
         return cancelar_todas()
-    if mensaje in ["ver estadísticas", "ver estadisticas"]:  # acepta ambas
+    if mensaje in ["ver estadisticas", "ver estadísticas"]:  # acepta ambas
         return estadisticas()
     if mensaje.startswith("cancelar"):
         return cancelar_cita(mensaje)
@@ -270,7 +272,6 @@ def cancelar_cita(mensaje):
 
     return f"❌ Cita de *{nombre}* a las *{hora}* cancelada."
 
-
 def estadisticas():
     try:
         with open(ARCHIVO_CITAS, "r", encoding="utf-8") as f:
@@ -292,13 +293,12 @@ def estadisticas():
         return texto
     except:
         return "⚠️ No se pudo calcular estadísticas."
-
 # ------------------- MENÚ -------------------
 
 def responder_menu(mensaje):
     if mensaje in ["hola", "buenas", "buenos dias", "buenos días", "buenas tardes", "hey"]:
         return (
-            "👋 ¡Hola! Bienvenido a *Barbería El Estilo* 💈\n"
+            "👋 ¡Hola! Bienvenido a *AxelBot Pro* 💈\n"
             "¿En qué puedo ayudarte hoy?\n\n"
             "📋 Escribe una opción:\n"
             "1️⃣ Ver servicios\n"
@@ -328,12 +328,11 @@ def responder_menu(mensaje):
     elif mensaje in ["5", "ubicacion", "ubicación", "donde estan", "dónde están"]:
         return "📍 *Ubicación:* Calz. de Tlalpan 5063, La Joya, CDMX. Frente a Converse 🚇"
     return (
-        "🙇‍♂️ Lo sentimos, en este momento estás hablando con el asistente conversacional de Luis *Axelbot*.\n"
+        "🙇‍♂️ Lo sentimos, en este momento estás hablando con el asistente conversacional de *AxelBot Pro*.\n"
         "Puedes usar el menú para reservar o consultar:\n"
         "1️⃣ Servicios\n2️⃣ Reservar\n3️⃣ Promociones\n4️⃣ Horarios\n5️⃣ Ubicación\n\n"
         "O si prefieres, escribe directamente: *Nombre, hora, servicio* para agendar tu cita."
     )
-
 # ------------------- LOG -------------------
 
 def registrar_log(numero, mensaje, respuesta):
@@ -347,21 +346,3 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

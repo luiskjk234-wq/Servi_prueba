@@ -190,22 +190,22 @@ def responder():
 def guardar_cita(nombre, hora, servicio):
     fecha = datetime.now().strftime("%Y-%m-%d")
     nueva_cita = {"nombre": nombre, "hora": hora, "fecha": fecha, "servicio": servicio}
-    print("💾 Guardando cita:", nueva_cita)
 
     try:
-        with open(ARCHIVO_CITAS, "r", encoding="utf-8") as f:
+        with open(ARCHIVO_CITAS, "r+", encoding="utf-8") as f:
             citas = json.load(f)
+            # Verificar duplicado
+            if any(c["fecha"] == fecha and c["hora"] == hora and c["nombre"] == nombre for c in citas):
+                return False
+            citas.append(nueva_cita)
+            f.seek(0)
+            json.dump(citas, f, indent=2, ensure_ascii=False)
+            f.truncate()
     except:
-        citas = []
-
-    if any(c["fecha"] == fecha and c["hora"] == hora and c["nombre"] == nombre for c in citas):
-        print("⚠️ Cita ya existe, no se agenda.")
-        return False
-
-    citas.append(nueva_cita)
-    with open(ARCHIVO_CITAS, "w", encoding="utf-8") as f:
-        json.dump(citas, f, indent=2, ensure_ascii=False)
+        with open(ARCHIVO_CITAS, "w", encoding="utf-8") as f:
+            json.dump([nueva_cita], f, indent=2, ensure_ascii=False)
     return True
+
 # ------------------- ADMIN -------------------
 
 def procesar_comando_admin(mensaje):
@@ -217,7 +217,7 @@ def procesar_comando_admin(mensaje):
         return limpiar_citas()
     if mensaje == "cancelar todas":
         return cancelar_todas()
-    if mensaje == "ver estadísticas":
+    if mensaje in ["ver estadísticas", "ver estadisticas"]:  # acepta ambas
         return estadisticas()
     if mensaje.startswith("cancelar"):
         return cancelar_cita(mensaje)
@@ -241,7 +241,7 @@ def ver_citas(fecha=None):
 def limpiar_citas():
     with open(ARCHIVO_CITAS, "w", encoding="utf-8") as f:
         json.dump([], f)
-    return "🧹 Citas eliminadas correctamente."
+    return "🧹 Todas las citas fueron eliminadas."
 
 def cancelar_todas():
     validar_archivo_citas()
@@ -259,19 +259,17 @@ def cancelar_cita(mensaje):
         return "⚠️ Hora inválida. Ejemplo: *cancelar Luis, 4:30 p.m.*"
 
     try:
-        with open(ARCHIVO_CITAS, "r", encoding="utf-8") as f:
+        with open(ARCHIVO_CITAS, "r+", encoding="utf-8") as f:
             citas = json.load(f)
-    except Exception as e:
-        print("⚠️ Error al leer citas.json:", e)
+            nuevas = [c for c in citas if not (c["nombre"] == nombre and c["hora"] == hora and c["fecha"] == fecha)]
+            f.seek(0)
+            json.dump(nuevas, f, indent=2, ensure_ascii=False)
+            f.truncate()
+    except:
         return "⚠️ No se pudo acceder a la agenda."
 
-    nuevas = [c for c in citas if not (c["nombre"] == nombre and c["hora"] == hora and c["fecha"] == fecha)]
-    if len(nuevas) == len(citas):
-        return "⚠️ No se encontró esa cita para cancelar."
-
-    with open(ARCHIVO_CITAS, "w", encoding="utf-8") as f:
-        json.dump(nuevas, f, indent=2, ensure_ascii=False)
     return f"❌ Cita de *{nombre}* a las *{hora}* cancelada."
+
 
 def estadisticas():
     try:
@@ -349,6 +347,7 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 

@@ -194,10 +194,19 @@ def guardar_cita(nombre, hora, servicio):
     fecha = datetime.now().strftime("%Y-%m-%d")
     nueva_cita = {"nombre": nombre, "hora": hora, "fecha": fecha, "servicio": servicio}
 
+    def normalizar_texto(txt):
+        return quitar_acentos(txt.strip().lower())
+
     try:
         with open(ARCHIVO_CITAS, "r+", encoding="utf-8") as f:
             citas = json.load(f)
-            if any(c["fecha"] == fecha and c["hora"] == hora and c["nombre"] == nombre for c in citas):
+            # Verificar duplicado con normalización
+            if any(
+                normalizar_texto(c["fecha"]) == normalizar_texto(fecha)
+                and normalizar_texto(c["hora"]) == normalizar_texto(hora)
+                and normalizar_texto(c["nombre"]) == normalizar_texto(nombre)
+                for c in citas
+            ):
                 return False
             citas.append(nueva_cita)
             f.seek(0)
@@ -207,6 +216,7 @@ def guardar_cita(nombre, hora, servicio):
         with open(ARCHIVO_CITAS, "w", encoding="utf-8") as f:
             json.dump([nueva_cita], f, indent=2, ensure_ascii=False)
     return True
+
 
 # ------------------- ADMIN -------------------
 
@@ -359,6 +369,7 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 

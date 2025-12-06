@@ -143,26 +143,23 @@ def responder():
     validar_archivo_citas()
     data = request.get_json() or {}
     mensaje = data.get('mensaje', '').strip()
-    numero = data.get('numero', '').replace("@c.us", "").replace("+", "")
     mensaje_limpio = mensaje.lower()
     mensaje_sin_acentos = quitar_acentos(mensaje_limpio)
 
-    print("📨 Mensaje recibido:", mensaje)
-    print("📞 Número recibido:", numero)
-
-    if not mensaje:
-        respuesta = "🤖 Escribe algo para que pueda ayudarte."
-        registrar_log(numero, mensaje, respuesta)
-        return jsonify(respuesta)
-
-    # 🔹 Bloque ADMIN corregido y robusto
-    # Limpia cualquier sufijo como @c.us, @lid, etc.
+    # 🔹 Procesamiento del número
     numero_crudo = data.get('numero', '')
     numero_limpio = re.sub(r'[^0-9]', '', numero_crudo)  # deja solo dígitos
 
-    print("DEBUG numero crudo:", numero_crudo)
-    print("DEBUG numero limpio:", numero_limpio)
+    print("📨 Mensaje recibido:", mensaje)
+    print("📞 Número crudo:", numero_crudo)
+    print("📞 Número limpio:", numero_limpio)
 
+    if not mensaje:
+        respuesta = "🤖 Escribe algo para que pueda ayudarte."
+        registrar_log(numero_limpio, mensaje, respuesta)
+        return jsonify(respuesta)
+
+    # 🔹 Bloque ADMIN
     if numero_limpio == ADMIN:
         if mensaje_sin_acentos.strip().startswith("cancelar") or mensaje_sin_acentos in [
             "ver citas", "ver agenda", "ver citas de hoy",
@@ -172,6 +169,30 @@ def responder():
             respuesta = procesar_comando_admin(mensaje_sin_acentos)
             registrar_log(numero_limpio, mensaje, respuesta)
             return jsonify(respuesta)
+
+    # 🔹 Interpretación normal de citas
+    nombre, hora, servicio = interpretar_cita(mensaje)
+    print("🧠 Interpretado:", f"nombre={nombre}", f"hora={hora}", f"servicio={servicio}")
+
+    if nombre and hora:
+        exito = guardar_cita(nombre, hora, servicio)
+        if exito:
+            respuesta = (
+                f"✅ ¡Listo, {nombre}! Tu cita fue agendada a las *{hora}* 💈\n"
+                f"🧾 Servicio: *{servicio}*"
+            )
+        else:
+            sugerencias = sugerir_horas(hora)
+            texto_sugerencias = "\n".join([f"- {h}" for h in sugerencias]) or "No hay horarios alternativos."
+            respuesta = (
+                f"⚠️ La hora *{hora}* ya está ocupada.\n"
+                f"¿Qué tal estas opciones?\n{texto_sugerencias}"
+            )
+    else:
+        respuesta = responder_menu(mensaje_limpio)
+
+    registrar_log(numero_limpio, mensaje, respuesta)
+    return jsonify(respuesta)
 
     nombre, hora, servicio = interpretar_cita(mensaje)
     print("🧠 Interpretado:", f"nombre={nombre}", f"hora={hora}", f"servicio={servicio}")
@@ -377,6 +398,7 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 

@@ -6,7 +6,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-ADMIN = "584126717861"
+ADMIN = "219954569855190"
 ARCHIVO_CITAS = "citas.json"
 LOG = "log.txt"
 
@@ -398,6 +398,7 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 

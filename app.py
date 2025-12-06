@@ -155,15 +155,18 @@ def responder():
         registrar_log(numero, mensaje, respuesta)
         return jsonify(respuesta)
 
-    if numero == ADMIN:
+    # 🔹 Bloque ADMIN corregido
+    # Detecta si el número recibido contiene o empieza con el número admin
+    if numero.startswith(ADMIN) or ADMIN in numero:
         if mensaje_sin_acentos.strip().startswith("cancelar") or mensaje_sin_acentos in [
             "ver citas", "ver agenda", "ver citas de hoy",
             "limpiar citas", "borrar citas", "cancelar todas",
-            "ver estadisticas"
+            "ver estadisticas", "ver estadísticas"
         ]:
             respuesta = procesar_comando_admin(mensaje_sin_acentos)
             registrar_log(numero, mensaje, respuesta)
             return jsonify(respuesta)
+
 
     nombre, hora, servicio = interpretar_cita(mensaje)
     print("🧠 Interpretado:", f"nombre={nombre}", f"hora={hora}", f"servicio={servicio}")
@@ -369,6 +372,7 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 

@@ -90,6 +90,29 @@ def normalizar_hora(hora_raw):
 
     return None
 
+def hora_humana_a_mysql(hhmm_ampm: str) -> str:
+    m = re.match(r"^(\d{1,2}):([0-5]\d)\s*(a\.m\.|p\.m\.)$", hhmm_ampm.strip(), re.IGNORECASE)
+    if not m:
+        return None
+    hh = int(m.group(1))
+    mm = int(m.group(2))
+    suf = m.group(3).lower()
+    if hh == 12:
+        hh24 = 0 if suf.startswith("a") else 12
+    else:
+        hh24 = hh if suf.startswith("a") else hh + 12
+    return f"{hh24:02d}:{mm:02d}:00"
+
+def hora_mysql_a_humana(hhmmss: str) -> str:
+    hh, mm, _ = hhmmss.split(":")
+    hh = int(hh)
+    suf = "a.m." if hh < 12 else "p.m."
+    hh12 = 12 if hh == 0 else (hh if hh <= 12 else hh - 12)
+    return f"{hh12}:{int(mm):02d} {suf}"
+
+def es_slot_valido(hora_humana: str) -> bool:
+    return hora_humana in HORAS_DISPONIBLES
+
 def interpretar_cita(mensaje):
     mensaje = mensaje.lower().replace(";", ",").replace("|", ",").strip()
     partes = [p.strip() for p in mensaje.split(",")] if "," in mensaje else mensaje.split()
@@ -143,10 +166,6 @@ def responder():
     numero_crudo = data.get('numero', '')
     numero_limpio = re.sub(r'[^0-9]', '', numero_crudo)
 
-    print("📨 Mensaje recibido:", mensaje)
-    print("📞 Número crudo:", numero_crudo)
-    print("📞 Número limpio:", numero_limpio)
-
     if not mensaje:
         respuesta = "🤖 Escribe algo para que pueda ayudarte."
         registrar_log(numero_limpio, mensaje, respuesta)
@@ -163,7 +182,6 @@ def responder():
             return jsonify(respuesta)
 
     nombre, hora, servicio = interpretar_cita(mensaje)
-    print("🧠 Interpretado:", f"nombre={nombre}", f"hora={hora}", f"servicio={servicio}")
 
     if nombre and hora:
         exito = guardar_cita(nombre, hora, servicio, numero_limpio)
@@ -173,12 +191,18 @@ def responder():
                 f"🧾 Servicio: *{servicio}*"
             )
         else:
-            sugerencias = sugerir_horas(hora)
-            texto_sugerencias = "\n".join([f"- {h}" for h in sugerencias]) or "No hay horarios alternativos."
-            respuesta = (
-                f"⚠️ La hora *{hora}* ya está ocupada.\n"
-                f"¿Qué tal estas opciones?\n{texto_sugerencias}"
-            )
+            if not es_slot_valido(hora):
+                                respuesta = (
+                    f"⚠️ La hora *{hora}* no es válida. Los horarios son cada 30 minutos entre 8:00 a.m. y 9:00 p.m.\n"
+                    f"Ejemplos válidos: 8:00 a.m., 8:30 a.m., 4:00 p.m., 4:30 p.m."
+                )
+            else:
+                sugerencias = sugerir_horas(hora)
+                texto_sugerencias = "\n".join([f"- {h}" for h in sugerencias]) or "No hay horarios alternativos."
+                respuesta = (
+                    f"⚠️ La hora *{hora}* ya está ocupada.\n"
+                    f"¿Qué tal estas opciones?\n{texto_sugerencias}"
+                )
     else:
         respuesta = responder_menu(mensaje_limpio)
 
@@ -188,16 +212,25 @@ def responder():
 # ------------------- FUNCIONES DE CITAS -------------------
 
 def guardar_cita(nombre, hora, servicio, telefono=""):
+    if not es_slot_valido(hora):
+        return False
+
+    hora_mysql = hora_humana_a_mysql(hora)
+    if not hora_mysql:
+        return False
+
     fecha = datetime.now().strftime("%Y-%m-%d")
     cursor = db.cursor()
     try:
         sql = """INSERT INTO citas (cliente_nombre, cliente_telefono, servicio, fecha, hora)
                  VALUES (%s, %s, %s, %s, %s)"""
-        valores = (nombre, telefono, servicio, fecha, hora)
+        valores = (nombre, telefono, servicio, fecha, hora_mysql)
         cursor.execute(sql, valores)
         db.commit()
         return True
     except mysql.connector.Error as e:
+        if getattr(e, "errno", None) == 1062:  # Duplicate entry
+            return False
         print("Error al guardar cita:", e)
         return False
 
@@ -219,9 +252,9 @@ def procesar_comando_admin(mensaje):
 def ver_citas(fecha=None):
     cursor = db.cursor(dictionary=True)
     if fecha:
-        cursor.execute("SELECT * FROM citas WHERE fecha=%s ORDER BY hora", (fecha,))
+        cursor.execute("SELECT cliente_nombre, servicio, fecha, TIME_FORMAT(hora, '%H:%i:%s') AS hora FROM citas WHERE fecha=%s ORDER BY hora", (fecha,))
     else:
-        cursor.execute("SELECT * FROM citas ORDER BY fecha DESC, hora ASC")
+        cursor.execute("SELECT cliente_nombre, servicio, fecha, TIME_FORMAT(hora, '%H:%i:%s') AS hora FROM citas ORDER BY fecha DESC, hora ASC")
     citas = cursor.fetchall()
 
     if not citas:
@@ -229,7 +262,7 @@ def ver_citas(fecha=None):
 
     texto = "📅 *Citas agendadas:*\n"
     for c in citas:
-        texto += f"- {c['cliente_nombre']} a las {c['hora']} ({c['fecha']}) — {c['servicio']}\n"
+        texto += f"- {c['cliente_nombre']} a las {hora_mysql_a_humana(c['hora'])} ({c['fecha']}) — {c['servicio']}\n"
     return texto
 
 def limpiar_citas():
@@ -247,22 +280,23 @@ def cancelar_cita(mensaje):
         return "⚠️ Escribe: *cancelar Nombre, hora*"
 
     nombre_raw = partes[0].strip()
-    hora = normalizar_hora(partes[1].strip())
-    fecha = datetime.now().strftime("%Y-%m-%d")
-
-    if not hora:
+    hora_humana = normalizar_hora(partes[1].strip())
+    if not hora_humana or not es_slot_valido(hora_humana):
         return "⚠️ Hora inválida. Ejemplo: *cancelar Luis, 4:30 p.m.*"
+
+    hora_mysql = hora_humana_a_mysql(hora_humana)
+    fecha = datetime.now().strftime("%Y-%m-%d")
 
     cursor = db.cursor()
     sql = """DELETE FROM citas 
              WHERE cliente_nombre=%s AND hora=%s AND fecha=%s"""
-    valores = (nombre_raw, hora, fecha)
+    valores = (nombre_raw, hora_mysql, fecha)
     cursor.execute(sql, valores)
     db.commit()
 
     if cursor.rowcount == 0:
         return "⚠️ No se encontró esa cita para cancelar."
-    return f"❌ Cita de *{nombre_raw.title()}* a las *{hora}* cancelada."
+    return f"❌ Cita de *{nombre_raw.title()}* a las *{hora_humana}* cancelada."
 
 def estadisticas():
     cursor = db.cursor(dictionary=True)
@@ -338,3 +372,4 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+

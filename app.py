@@ -205,20 +205,31 @@ def cancelar_cita(mensaje):
 
 def estadisticas():
     cursor = db.cursor(dictionary=True)
+
+    # Total de citas
     cursor.execute("SELECT COUNT(*) AS total FROM citas_demo")
     total = cursor.fetchone()["total"]
 
+    # Citas por fecha
     cursor.execute("SELECT fecha, COUNT(*) AS cantidad FROM citas_demo GROUP BY fecha")
     por_fecha = cursor.fetchall()
 
+    # Citas por servicio
+    cursor.execute("SELECT servicio, COUNT(*) AS cantidad FROM citas_demo GROUP BY servicio")
+    por_servicio = cursor.fetchall()
+
+    # Construir texto
     texto = f"📊 *Estadísticas:*\nTotal de citas: {total}\n"
     for f in por_fecha:
         texto += f"- {f['fecha']}: {f['cantidad']} cita(s)\n"
-    if por_servicio:
+
+    if por_servicio and len(por_servicio) > 0:
         texto += "🧾 Por servicio:\n"
         for s in por_servicio:
             texto += f"- {s['servicio']}: {s['cantidad']}\n"
+
     return texto
+
 
 # ------------------- MENÚ -------------------
 
@@ -274,3 +285,4 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+

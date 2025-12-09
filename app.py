@@ -9,36 +9,16 @@ app = Flask(__name__)
 ADMIN = "219954569855190"
 LOG = "log.txt"
 
-# Conexión a MySQL
+# Flag de modo demo (True = cualquier horario permitido)
+DEMO_MODE = True
+
+# Conexión a MySQL (usa la base de demo)
 db = mysql.connector.connect(
     host="localhost",
     user="axelbot_user",
     password="LuisKjk345@#",
-    database="axelbot"
+    database="axelbot_demo"
 )
-
-# Horarios disponibles (8:00 a.m. – 9:00 p.m. cada 30 min)
-HORAS_DISPONIBLES = [
-    f"{h}:{m:02d} {'a.m.' if h < 12 else 'p.m.'}"
-    for h in range(8, 21) for m in (0, 30)
-]
-
-# Servicios válidos con alias
-SERVICIOS_VALIDOS = {
-    "corte+barba": "Corte + barba",
-    "cb": "Corte + barba",
-    "barba": "Corte + barba",
-    "barb": "Corte + barba",
-
-    "corte fade": "Corte Fade",
-    "cortef": "Corte Fade",
-    "fade": "Corte Fade",
-    "cf": "Corte Fade",
-
-    "corte": "Corte",
-    "cejas": "Diseño de cejas",
-    "escolar": "Recortes escolares"
-}
 
 # ------------------- UTILIDADES -------------------
 
@@ -60,33 +40,13 @@ def normalizar_hora(hora_raw):
     if match:
         hh, mm = int(match.group(1)), int(match.group(2))
         sufijo = "a.m." if match.group(3) == "a" else "p.m."
-        if 0 <= hh <= 12 and 0 <= mm < 60:
-            return f"{hh}:{mm:02d} {sufijo}"
+        return f"{hh}:{mm:02d} {sufijo}"
 
     match = re.match(r"^(\d{1,2})(a|p)m$", h)
     if match:
         hh = int(match.group(1))
         sufijo = "a.m." if match.group(2) == "a" else "p.m."
         return f"{hh}:00 {sufijo}"
-
-    match = re.match(r"^([01]?\d|2[0-3])$", h)
-    if match:
-        hh = int(match.group(1))
-        sufijo = "a.m." if hh < 12 else "p.m."
-        hh = hh if 1 <= hh <= 12 else hh - 12 if hh > 12 else 12
-        return f"{hh}:00 {sufijo}"
-
-    match = re.match(r"^([01]?\d|2[0-3])([0-5]\d)$", h)
-    if match:
-        hh, mm = int(match.group(1)), int(match.group(2))
-        sufijo = "a.m." if hh < 12 else "p.m."
-        hh = hh if 1 <= hh <= 12 else hh - 12 if hh > 12 else 12
-        return f"{hh}:{mm:02d} {sufijo}"
-
-    for h_disp in HORAS_DISPONIBLES:
-        h_flex = h_disp.replace(".", "").replace(" ", "").replace(":", "")
-        if h == h_flex:
-            return h_disp
 
     return None
 
@@ -109,50 +69,6 @@ def hora_mysql_a_humana(hhmmss: str) -> str:
     suf = "a.m." if hh < 12 else "p.m."
     hh12 = 12 if hh == 0 else (hh if hh <= 12 else hh - 12)
     return f"{hh12}:{int(mm):02d} {suf}"
-
-def es_slot_valido(hora_humana: str) -> bool:
-    return hora_humana in HORAS_DISPONIBLES
-
-def interpretar_cita(mensaje):
-    mensaje = mensaje.lower().replace(";", ",").replace("|", ",").strip()
-    partes = [p.strip() for p in mensaje.split(",")] if "," in mensaje else mensaje.split()
-
-    nombre, hora, servicio = None, None, None
-
-    for parte in partes:
-        if not parte:
-            continue
-
-        h = normalizar_hora(parte)
-        if h and not hora:
-            hora = h
-            continue
-
-        if parte in SERVICIOS_VALIDOS:
-            servicio = SERVICIOS_VALIDOS[parte]
-            continue
-
-        for clave in sorted(SERVICIOS_VALIDOS.keys(), key=len, reverse=True):
-            if clave in parte:
-                servicio = SERVICIOS_VALIDOS[clave]
-                break
-
-        if not hora and not any(clave in parte for clave in SERVICIOS_VALIDOS):
-            nombre = (nombre + " " + parte.title()) if nombre else parte.title()
-
-    return nombre, hora, servicio if servicio else "Corte"
-
-def sugerir_horas(hora):
-    idx = [i for i, h in enumerate(HORAS_DISPONIBLES) if h == hora]
-    if not idx:
-        return []
-    i = idx[0]
-    sugerencias = []
-    for offset in [-1, 1, 2]:
-        j = i + offset
-        if 0 <= j < len(HORAS_DISPONIBLES):
-            sugerencias.append(HORAS_DISPONIBLES[j])
-    return sugerencias
 
 # ------------------- ENDPOINT PRINCIPAL -------------------
 
@@ -181,7 +97,10 @@ def responder():
             registrar_log(numero_limpio, mensaje, respuesta)
             return jsonify(respuesta)
 
-    nombre, hora, servicio = interpretar_cita(mensaje)
+    partes = mensaje.split(",")
+    nombre = partes[0].strip().title() if len(partes) > 0 else None
+    hora = normalizar_hora(partes[1].strip()) if len(partes) > 1 else None
+    servicio = partes[2].strip().title() if len(partes) > 2 else "Corte"
 
     if nombre and hora:
         exito = guardar_cita(nombre, hora, servicio, numero_limpio)
@@ -191,18 +110,7 @@ def responder():
                 f"🧾 Servicio: *{servicio}*"
             )
         else:
-            if not es_slot_valido(hora):
-                                respuesta = (
-                    f"⚠️ La hora *{hora}* no es válida. Los horarios son cada 30 minutos entre 8:00 a.m. y 9:00 p.m.\n"
-                    f"Ejemplos válidos: 8:00 a.m., 8:30 a.m., 4:00 p.m., 4:30 p.m."
-                )
-            else:
-                sugerencias = sugerir_horas(hora)
-                texto_sugerencias = "\n".join([f"- {h}" for h in sugerencias]) or "No hay horarios alternativos."
-                respuesta = (
-                    f"⚠️ La hora *{hora}* ya está ocupada.\n"
-                    f"¿Qué tal estas opciones?\n{texto_sugerencias}"
-                )
+            respuesta = f"⚠️ La hora *{hora}* ya está ocupada."
     else:
         respuesta = responder_menu(mensaje_limpio)
 
@@ -212,17 +120,14 @@ def responder():
 # ------------------- FUNCIONES DE CITAS -------------------
 
 def guardar_cita(nombre, hora, servicio, telefono=""):
-    if not es_slot_valido(hora):
-        return False
-
+    fecha = datetime.now().strftime("%Y-%m-%d")
     hora_mysql = hora_humana_a_mysql(hora)
     if not hora_mysql:
         return False
 
-    fecha = datetime.now().strftime("%Y-%m-%d")
     cursor = db.cursor()
     try:
-        sql = """INSERT INTO citas (cliente_nombre, cliente_telefono, servicio, fecha, hora)
+        sql = """INSERT INTO citas_demo (cliente_nombre, cliente_telefono, servicio, fecha, hora)
                  VALUES (%s, %s, %s, %s, %s)"""
         valores = (nombre, telefono, servicio, fecha, hora_mysql)
         cursor.execute(sql, valores)
@@ -252,9 +157,9 @@ def procesar_comando_admin(mensaje):
 def ver_citas(fecha=None):
     cursor = db.cursor(dictionary=True)
     if fecha:
-        cursor.execute("SELECT cliente_nombre, servicio, fecha, TIME_FORMAT(hora, '%H:%i:%s') AS hora FROM citas WHERE fecha=%s ORDER BY hora", (fecha,))
+        cursor.execute("SELECT cliente_nombre, servicio, fecha, TIME_FORMAT(hora, '%H:%i:%s') AS hora FROM citas_demo WHERE fecha=%s ORDER BY hora", (fecha,))
     else:
-        cursor.execute("SELECT cliente_nombre, servicio, fecha, TIME_FORMAT(hora, '%H:%i:%s') AS hora FROM citas ORDER BY fecha DESC, hora ASC")
+        cursor.execute("SELECT cliente_nombre, servicio, fecha, TIME_FORMAT(hora, '%H:%i:%s') AS hora FROM citas_demo ORDER BY fecha DESC, hora ASC")
     citas = cursor.fetchall()
 
     if not citas:
@@ -267,7 +172,7 @@ def ver_citas(fecha=None):
 
 def limpiar_citas():
     cursor = db.cursor()
-    cursor.execute("DELETE FROM citas")
+    cursor.execute("DELETE FROM citas_demo")
     db.commit()
     return "🧹 Todas las citas fueron eliminadas."
 
@@ -281,14 +186,14 @@ def cancelar_cita(mensaje):
 
     nombre_raw = partes[0].strip()
     hora_humana = normalizar_hora(partes[1].strip())
-    if not hora_humana or not es_slot_valido(hora_humana):
+    if not hora_humana:
         return "⚠️ Hora inválida. Ejemplo: *cancelar Luis, 4:30 p.m.*"
 
     hora_mysql = hora_humana_a_mysql(hora_humana)
     fecha = datetime.now().strftime("%Y-%m-%d")
 
     cursor = db.cursor()
-    sql = """DELETE FROM citas 
+    sql = """DELETE FROM citas_demo 
              WHERE cliente_nombre=%s AND hora=%s AND fecha=%s"""
     valores = (nombre_raw, hora_mysql, fecha)
     cursor.execute(sql, valores)
@@ -300,14 +205,11 @@ def cancelar_cita(mensaje):
 
 def estadisticas():
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT COUNT(*) AS total FROM citas")
+    cursor.execute("SELECT COUNT(*) AS total FROM citas_demo")
     total = cursor.fetchone()["total"]
 
-    cursor.execute("SELECT fecha, COUNT(*) AS cantidad FROM citas GROUP BY fecha")
+    cursor.execute("SELECT fecha, COUNT(*) AS cantidad FROM citas_demo GROUP BY fecha")
     por_fecha = cursor.fetchall()
-
-    cursor.execute("SELECT servicio, COUNT(*) AS cantidad FROM citas GROUP BY servicio")
-    por_servicio = cursor.fetchall()
 
     texto = f"📊 *Estadísticas:*\nTotal de citas: {total}\n"
     for f in por_fecha:
@@ -349,7 +251,7 @@ def responder_menu(mensaje):
             "🎉 *Promoción del día:*\nCorte + barba por *$150 MXN* 💸\nVálido hasta las 7:00 p.m."
         )
     elif mensaje in ["4", "horarios", "horario"]:
-        return "🕒 *Horario:* Lunes a Domingo, 8:00 a.m. a 9:00 p.m. cada 30 min."
+        return "🕒 *Horario:* Lunes a Domingo, cualquier hora disponible (modo demo)."
     elif mensaje in ["5", "ubicacion", "ubicación", "donde estan", "dónde están"]:
         return "📍 *Ubicación:* Calz. de Tlalpan 5063, La Joya, CDMX. Frente a Converse 🚇"
     return (
@@ -372,4 +274,3 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
-

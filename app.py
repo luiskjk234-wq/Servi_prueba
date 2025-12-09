@@ -216,7 +216,6 @@ def procesar_comando_admin(mensaje):
         return cancelar_cita(mensaje)
     return responder_menu(mensaje)
 
-
 def ver_citas(fecha=None):
     cursor = db.cursor(dictionary=True)
     if fecha:
@@ -339,4 +338,3 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
-

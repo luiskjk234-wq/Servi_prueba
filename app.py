@@ -201,6 +201,22 @@ def guardar_cita(nombre, hora, servicio, telefono=""):
         print("Error al guardar cita:", e)
         return False
 
+def procesar_comando_admin(mensaje):
+    if mensaje in ["ver citas", "ver agenda"]:
+        return ver_citas()
+    if mensaje == "ver citas de hoy":
+        return ver_citas(fecha=datetime.now().strftime("%Y-%m-%d"))
+    if mensaje in ["limpiar citas", "borrar citas"]:
+        return limpiar_citas()
+    if mensaje == "cancelar todas":
+        return cancelar_todas()
+    if mensaje in ["ver estadisticas", "ver estadísticas"]:
+        return estadisticas()
+    if mensaje.startswith("cancelar"):
+        return cancelar_cita(mensaje)
+    return responder_menu(mensaje)
+
+
 def ver_citas(fecha=None):
     cursor = db.cursor(dictionary=True)
     if fecha:
@@ -323,3 +339,4 @@ def registrar_log(numero, mensaje, respuesta):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+

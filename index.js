@@ -3,11 +3,12 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const axios = require('axios');
 
+// Nombre de sesión y backend
 const sessionName = process.env.SESSION_NAME || 'axelbot';
 const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000/respuesta';
 
-// Ruta al binario de Chromium descargado por Puppeteer
-const chromiumPath = '/root/.cache/puppeteer/chrome/linux-142.0.7444.175/chrome-linux64/chrome';
+// Ruta correcta del navegador (Google Chrome)
+const chromiumPath = '/usr/bin/google-chrome';
 
 // Guardamos el momento de inicio para filtrar mensajes antiguos
 let startTime = Date.now();
@@ -57,7 +58,7 @@ client.on('qr', qr => {
 // Cliente listo
 client.on('ready', () => {
   console.log("✅ Cliente conectado a WhatsApp y listo para recibir mensajes");
-  startTime = Date.now(); // actualizamos el tiempo exacto de conexión
+  startTime = Date.now();
 });
 
 // Mensajes entrantes
